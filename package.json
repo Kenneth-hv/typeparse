@@ -1,6 +1,10 @@
 {
   "name": "typeparse",
   "version": "0.0.10",
+  "author": {
+    "email": "kfhv.24@gmail.com",
+    "name": "Kenneth Herrera"
+  },
   "main": "./dist/TypeParse.js",
   "types": "./dist/TypeParse.d.ts",
   "keywords": [
@@ -42,5 +46,12 @@
   "dependencies": {
     "@sinclair/typebox": "^0.23.4",
     "lodash": "^4.17.21"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Kenneth-hv/typeparse"
+  },
+  "bugs": {
+    "url": "https://github.com/Kenneth-hv/typeparse/issues"
   }
 }
