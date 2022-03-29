@@ -1,3 +1,9 @@
+/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Kenneth Herrera. All rights reserved.
+ *  Licensed under the MIT License. See LICENSE in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
+
+
 import { TypeParse, Types as T } from "../src/TypeParse";
 
 export interface TestUnit {
@@ -181,6 +187,16 @@ const tests: TestUnit[] = [
         pboolean: false,
       },
     ],
+  },
+  {
+    name: "Partial array parse",
+    input: {
+      obj: {
+        array: ["123", "asd", "123.35", "-2.3"],
+      },
+    },
+    parser: new TypeParse(T.Array(T.Number().optional(), "obj.array")),
+    expected: [123, 123.35, -2.3],
   },
 ];
 

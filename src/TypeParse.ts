@@ -1,28 +1,7 @@
-/*------------------------------------------------------------------------------
-
-  TypeParse: 
-  Runtime object parsing and validation with static TypeScript typing.
-
-  Copyright 2022 Kenneth Herrera <kfhv.24@gmail.com>
-
-  Permission is hereby granted, free of charge, to any person obtaining a copy
-  of this software and associated documentation files (the "Software"), to deal
-  in the Software without restriction, including without limitation the rights
-  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-  copies of the Software, and to permit persons to whom the Software is
-  furnished to do so, subject to the following conditions:
-  The above copyright notice and this permission notice shall be included in
-  all copies or substantial portions of the Software.
-
-  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-  THE SOFTWARE.
-
-------------------------------------------------------------------------------*/
+/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Kenneth Herrera. All rights reserved.
+ *  Licensed under the MIT License. See LICENSE in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
 
 import {
   Static,
@@ -61,18 +40,11 @@ export class TypeParse<T extends TParseOptions = TParseOptions> {
 
     if (option.as === "string") {
       return this.parseString(input, option);
-    }
-
-    if (option.as === "number") {
+    } else if (option.as === "number") {
       return this.parseNumber(input, option);
-    }
-
-    if (option.as === "boolean") {
+    } else {
       return this.parseBoolean(input, option);
     }
-
-    console.error(option);
-    throw Error("Could not parse");
   }
 
   private parseString(
@@ -84,7 +56,7 @@ export class TypeParse<T extends TParseOptions = TParseOptions> {
     if (typeof input === "number" || typeof input === "boolean")
       return `${input}`;
 
-    if (option.defaultValue) {
+    if (option.defaultValue !== undefined) {
       return option.defaultValue;
     } else if (option.isOptional) {
       return undefined;
@@ -106,7 +78,7 @@ export class TypeParse<T extends TParseOptions = TParseOptions> {
       }
     }
 
-    if (option.defaultValue) {
+    if (option.defaultValue !== undefined) {
       return option.defaultValue;
     } else if (option.isOptional) {
       return undefined;
@@ -121,9 +93,9 @@ export class TypeParse<T extends TParseOptions = TParseOptions> {
   ): boolean | undefined {
     if (typeof input === "boolean") return input;
 
-    if (!option.strict) return !!input;
+    if (!option.strict && typeof input !== "undefined") return !!input;
 
-    if (option.defaultValue) {
+    if (option.defaultValue !== undefined) {
       return option.defaultValue;
     } else if (option.isOptional) {
       return undefined;
@@ -163,21 +135,19 @@ export class TypeParse<T extends TParseOptions = TParseOptions> {
     }
     const result: { [key: string]: unknown } = {};
 
-    if ("properties" in option) {
-      Object.entries(option.properties).forEach(([key, value]) => {
-        result[key] = this.parse(input, value);
-      });
-    } else throw new Error("Object parse option missing properties");
+    Object.entries(option.properties).forEach(([key, value]) => {
+      result[key] = this.parse(input, value);
+    });
 
     return result;
   }
 }
 
-const makeOptional = <T extends TParseOption>(option: T): TParseOptional<T> => {
+const optional = <T extends TParseOption>(option: T): TParseOptional<T> => {
   return {
     ...option,
     isOptional: true,
-    makeOptional: undefined,
+    optional: undefined,
   };
 };
 
@@ -194,8 +164,8 @@ export const Types = {
       from,
       defaultValue: config?.defaultValue,
       isOptional: false,
-      makeOptional: function () {
-        return makeOptional(this);
+      optional: function () {
+        return optional(this);
       },
     };
   },
@@ -211,8 +181,8 @@ export const Types = {
       from,
       defaultValue: config?.defaultValue,
       isOptional: false,
-      makeOptional: function () {
-        return makeOptional(this);
+      optional: function () {
+        return optional(this);
       },
     };
   },
@@ -230,8 +200,8 @@ export const Types = {
       defaultValue: config?.defaultValue,
       strict: config?.strict !== undefined ? config.strict : true,
       isOptional: false,
-      makeOptional: function () {
-        return makeOptional(this);
+      optional: function () {
+        return optional(this);
       },
     };
   },
@@ -245,8 +215,8 @@ export const Types = {
       from,
       type,
       isOptional: false,
-      makeOptional: function () {
-        return makeOptional(this);
+      optional: function () {
+        return optional(this);
       },
     };
   },
@@ -258,8 +228,8 @@ export const Types = {
       as: "object",
       properties,
       isOptional: false,
-      makeOptional: function () {
-        return makeOptional(this);
+      optional: function () {
+        return optional(this);
       },
     };
   },

@@ -1,3 +1,9 @@
+/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Kenneth Herrera. All rights reserved.
+ *  Licensed under the MIT License. See LICENSE in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
+
+
 import { TypeParse, Types as T } from "../src/TypeParse";
 import { expect } from "chai";
 import { describe } from "mocha";
@@ -132,6 +138,21 @@ describe("Simple type parsing", () => {
   });
 });
 
+describe("Default values", () => {
+  it("(String)", () => {
+    const tp = new TypeParse(T.String("x", { defaultValue: "<default>" }));
+    expect(tp.parse(undefined)).to.be.equal("<default>");
+  });
+  it("(Number)", () => {
+    const tp = new TypeParse(T.Number("x", { defaultValue: 123 }));
+    expect(tp.parse(undefined)).to.be.equal(123);
+  });
+  it("(Boolean)", () => {
+    const tp = new TypeParse(T.Boolean("x", { defaultValue: false }));
+    expect(tp.parse(undefined)).to.be.equal(false);
+  });
+});
+
 describe("Array parsing", () => {
   const subject = {
     array: [
@@ -203,7 +224,7 @@ describe("Edge cases", () => {
         expect(() => tp.parse(undefined)).to.throw("Cannot parse string");
       });
       it("(string, optional)", () => {
-        const tp = new TypeParse(T.String("x").makeOptional());
+        const tp = new TypeParse(T.String("x").optional());
         expect(tp.parse(undefined)).to.be.equal(undefined);
       });
       it("(number)", () => {
@@ -211,7 +232,7 @@ describe("Edge cases", () => {
         expect(() => tp.parse(undefined)).to.throw("Cannot parse number");
       });
       it("(number, optional)", () => {
-        const tp = new TypeParse(T.Number("x").makeOptional());
+        const tp = new TypeParse(T.Number("x").optional());
         expect(tp.parse(undefined)).to.be.equal(undefined);
       });
       it("(boolean)", () => {
@@ -219,7 +240,7 @@ describe("Edge cases", () => {
         expect(() => tp.parse(undefined)).to.throw("Cannot parse boolean");
       });
       it("(boolean, optional)", () => {
-        const tp = new TypeParse(T.Boolean("x").makeOptional());
+        const tp = new TypeParse(T.Boolean("x").optional());
         expect(tp.parse(undefined)).to.be.equal(undefined);
       });
 
@@ -228,7 +249,7 @@ describe("Edge cases", () => {
         expect(() => tp.parse(undefined)).to.throw("Cannot parse boolean");
       });
       it("(boolean, optional)", () => {
-        const tp = new TypeParse(T.Boolean("x").makeOptional());
+        const tp = new TypeParse(T.Boolean("x").optional());
         expect(tp.parse(undefined)).to.be.equal(undefined);
       });
     });
@@ -238,7 +259,7 @@ describe("Edge cases", () => {
         expect(() => tp.parse(undefined)).to.throw("Is not array");
       });
       it("(array, optional)", () => {
-        const tp = new TypeParse(T.Array(T.String("x")).makeOptional());
+        const tp = new TypeParse(T.Array(T.String("x")).optional());
         expect(tp.parse(undefined)).to.be.equal(undefined);
       });
       it("(object)", () => {
@@ -246,7 +267,7 @@ describe("Edge cases", () => {
         expect(() => tp.parse(undefined)).to.throw("Is not object");
       });
       it("(object, optional)", () => {
-        const tp = new TypeParse(T.Object({ x: T.String("x") }).makeOptional());
+        const tp = new TypeParse(T.Object({ x: T.String("x") }).optional());
         expect(tp.parse(undefined)).to.be.equal(undefined);
       });
     });
