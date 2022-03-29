@@ -1,8 +1,17 @@
 {
   "name": "typeparse",
-  "version": "0.0.9",
+  "version": "0.0.10",
   "main": "./dist/TypeParse.js",
   "types": "./dist/TypeParse.d.ts",
+  "keywords": [
+    "assertion",
+    "parsing",
+    "typescript",
+    "types",
+    "schema",
+    "typing",
+    "static"
+  ],
   "scripts": {
     "dev": "ts-node src/examples/main.ts",
     "build": "tsc",

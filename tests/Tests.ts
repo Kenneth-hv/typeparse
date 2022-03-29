@@ -182,6 +182,16 @@ const tests: TestUnit[] = [
       },
     ],
   },
+  {
+    name: "Partial array parse",
+    input: {
+      obj: {
+        array: ["123", "asd", "123.35", "-2.3"],
+      },
+    },
+    parser: new TypeParse(T.Array(T.Number().optional(), "obj.array")),
+    expected: [123, 123.35, -2.3],
+  },
 ];
 
 export default tests;

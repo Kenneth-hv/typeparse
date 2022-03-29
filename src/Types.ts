@@ -40,7 +40,7 @@ export interface TParseOption {
 
 export type TParseRequired<T extends TParseOption> = T & {
   isOptional: false;
-  makeOptional: () => TParseOptional<T>;
+  optional: () => TParseOptional<T>;
 };
 
 export type TParseOptional<T extends TParseOption> = T & {

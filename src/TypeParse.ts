@@ -61,18 +61,11 @@ export class TypeParse<T extends TParseOptions = TParseOptions> {
 
     if (option.as === "string") {
       return this.parseString(input, option);
-    }
-
-    if (option.as === "number") {
+    } else if (option.as === "number") {
       return this.parseNumber(input, option);
-    }
-
-    if (option.as === "boolean") {
+    } else {
       return this.parseBoolean(input, option);
     }
-
-    console.error(option);
-    throw Error("Could not parse");
   }
 
   private parseString(
@@ -84,7 +77,7 @@ export class TypeParse<T extends TParseOptions = TParseOptions> {
     if (typeof input === "number" || typeof input === "boolean")
       return `${input}`;
 
-    if (option.defaultValue) {
+    if (option.defaultValue !== undefined) {
       return option.defaultValue;
     } else if (option.isOptional) {
       return undefined;
@@ -106,7 +99,7 @@ export class TypeParse<T extends TParseOptions = TParseOptions> {
       }
     }
 
-    if (option.defaultValue) {
+    if (option.defaultValue !== undefined) {
       return option.defaultValue;
     } else if (option.isOptional) {
       return undefined;
@@ -121,9 +114,9 @@ export class TypeParse<T extends TParseOptions = TParseOptions> {
   ): boolean | undefined {
     if (typeof input === "boolean") return input;
 
-    if (!option.strict) return !!input;
+    if (!option.strict && typeof input !== "undefined") return !!input;
 
-    if (option.defaultValue) {
+    if (option.defaultValue !== undefined) {
       return option.defaultValue;
     } else if (option.isOptional) {
       return undefined;
@@ -163,21 +156,19 @@ export class TypeParse<T extends TParseOptions = TParseOptions> {
     }
     const result: { [key: string]: unknown } = {};
 
-    if ("properties" in option) {
-      Object.entries(option.properties).forEach(([key, value]) => {
-        result[key] = this.parse(input, value);
-      });
-    } else throw new Error("Object parse option missing properties");
+    Object.entries(option.properties).forEach(([key, value]) => {
+      result[key] = this.parse(input, value);
+    });
 
     return result;
   }
 }
 
-const makeOptional = <T extends TParseOption>(option: T): TParseOptional<T> => {
+const optional = <T extends TParseOption>(option: T): TParseOptional<T> => {
   return {
     ...option,
     isOptional: true,
-    makeOptional: undefined,
+    optional: undefined,
   };
 };
 
@@ -194,8 +185,8 @@ export const Types = {
       from,
       defaultValue: config?.defaultValue,
       isOptional: false,
-      makeOptional: function () {
-        return makeOptional(this);
+      optional: function () {
+        return optional(this);
       },
     };
   },
@@ -211,8 +202,8 @@ export const Types = {
       from,
       defaultValue: config?.defaultValue,
       isOptional: false,
-      makeOptional: function () {
-        return makeOptional(this);
+      optional: function () {
+        return optional(this);
       },
     };
   },
@@ -230,8 +221,8 @@ export const Types = {
       defaultValue: config?.defaultValue,
       strict: config?.strict !== undefined ? config.strict : true,
       isOptional: false,
-      makeOptional: function () {
-        return makeOptional(this);
+      optional: function () {
+        return optional(this);
       },
     };
   },
@@ -245,8 +236,8 @@ export const Types = {
       from,
       type,
       isOptional: false,
-      makeOptional: function () {
-        return makeOptional(this);
+      optional: function () {
+        return optional(this);
       },
     };
   },
@@ -258,8 +249,8 @@ export const Types = {
       as: "object",
       properties,
       isOptional: false,
-      makeOptional: function () {
-        return makeOptional(this);
+      optional: function () {
+        return optional(this);
       },
     };
   },
