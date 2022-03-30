@@ -328,7 +328,7 @@ describe("Edge cases", () => {
   });
 });
 
-describe("Relative path", () => {
+describe("Relative paths", () => {
   const obj = {
     value1: 123,
     value2: "123",
@@ -337,6 +337,11 @@ describe("Relative path", () => {
       value1: 123,
       value2: "123",
       value3: true,
+      nested: {
+        value1: 123,
+        value2: "123",
+        value3: true,
+      },
     },
   };
   it("(string)", () => {
@@ -381,6 +386,50 @@ describe("Relative path", () => {
         })
       );
       expect(tp.parse(obj)).to.be.deep.equal({ nested: { value3: true } });
+    });
+  });
+  describe("Double nested object", () => {
+    it("(string)", () => {
+      const tp = new TypeParse(
+        T.Object({
+          nested: T.Object({
+            nested: T.Object({
+              value1: T.String(),
+            }),
+          }),
+        })
+      );
+      expect(tp.parse(obj)).to.be.deep.equal({
+        nested: { nested: { value1: "123" } },
+      });
+    });
+    it("(number)", () => {
+      const tp = new TypeParse(
+        T.Object({
+          nested: T.Object({
+            nested: T.Object({
+              value2: T.Number(),
+            }),
+          }),
+        })
+      );
+      expect(tp.parse(obj)).to.be.deep.equal({
+        nested: { nested: { value2: 123 } },
+      });
+    });
+    it("(boolean)", () => {
+      const tp = new TypeParse(
+        T.Object({
+          nested: T.Object({
+            nested: T.Object({
+              value3: T.Boolean(),
+            }),
+          }),
+        })
+      );
+      expect(tp.parse(obj)).to.be.deep.equal({
+        nested: { nested: { value3: true } },
+      });
     });
   });
 });
