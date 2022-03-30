@@ -33,6 +33,7 @@ describe("Get method", () => {
     expect(get(obj, "b.d.x")).to.be.equal(undefined);
   });
   it("Simple array index", () => {
+    expect(get(obj.e, "[0]")).to.be.equal(12);
     expect(get(obj, "e.[0]")).to.be.equal(12);
   });
   it("Simple array index nested", () => {
@@ -47,5 +48,20 @@ describe("Get method", () => {
     expect(get(obj, "g.\\[0]")).to.be.equal("16");
     expect(get(obj, "g.\\[45]")).to.be.equal("17");
     expect(get(obj, "g.\\[-12]")).to.be.equal("18");
+  });
+  describe("Edge cases", () => {
+    it("Input not object", () => {
+      expect(get(123, "index.[23]")).to.be.equal(undefined);
+      expect(get("string", "index.[23]")).to.be.equal(undefined);
+      expect(get(undefined, "index.[23]")).to.be.equal(undefined);
+      expect(get(true, "index.[23]")).to.be.equal(undefined);
+    });
+    it("Index object with array syntax ", () => {
+      expect(get({ obj: { a: 1 } }, "obj.[0]")).to.be.equal(undefined);
+      expect(get({ obj: { a: 1 } }, "obj.[0]")).to.be.equal(undefined);
+    });
+    it("Input not object", () => {
+      expect(get({ "": 123 }, "")).to.be.equal(123);
+    });
   });
 });

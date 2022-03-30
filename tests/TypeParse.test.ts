@@ -231,24 +231,42 @@ describe("Optional types", () => {
     const result = tp.parse({});
     expect(result).to.be.deep.equal({ obj: undefined });
   });
-  it("(object)", () => {
+  it("(array)", () => {
+    const tp = new TypeParse(
+      T.Object({
+        array: T.Array(T.String("value")).optional(),
+      })
+    );
+    const result = tp.parse({});
+    expect(result).to.be.deep.equal({ array: undefined });
+  });
+  it("(not optional object, throws error)", () => {
     const tp = new TypeParse(
       T.Object({
         obj: T.Object({
           value: T.String("value"),
-        }).optional(),
+        }),
       })
     );
-    const result = tp.parse({});
-    expect(result).to.be.deep.equal({ obj: undefined });
+    expect(() => tp.parse({})).to.throw("Cannot parse string");
   });
-});
-
-describe("Multiple testing", () => {
-  tests.forEach((test, index) => {
-    it(`Test #${index + 1}: ${test.name}`, () => {
-      expect(test.parser.parse(test.input)).to.be.deep.equal(test.expected);
-    });
+  it("(not optional array, throws error #1)", () => {
+    const tp = new TypeParse(
+      T.Object({
+        array: T.Array(T.String("value")),
+      })
+    );
+    expect(() => tp.parse({})).to.throw("Is not array");
+  });
+  it("(not optional number array, throws error #2)", () => {
+    const tp = new TypeParse(
+      T.Object({
+        array: T.Array(T.Number("value")),
+      })
+    );
+    expect(() => tp.parse({ array: ["Hello"] })).to.throw(
+      "Cannot parse number"
+    );
   });
 });
 
@@ -306,6 +324,71 @@ describe("Edge cases", () => {
         const tp = new TypeParse(T.Object({ x: T.String("x") }).optional());
         expect(tp.parse(undefined)).to.be.equal(undefined);
       });
+    });
+  });
+});
+
+describe("Relative path", () => {
+  const obj = {
+    value1: 123,
+    value2: "123",
+    value3: true,
+    nested: {
+      value1: 123,
+      value2: "123",
+      value3: true,
+    },
+  };
+  it("(string)", () => {
+    const tp = new TypeParse(T.Object({ value1: T.String() }));
+    expect(tp.parse(obj)).to.be.deep.equal({ value1: "123" });
+  });
+  it("(number)", () => {
+    const tp = new TypeParse(T.Object({ value2: T.Number() }));
+    expect(tp.parse(obj)).to.be.deep.equal({ value2: 123 });
+  });
+  it("(boolean)", () => {
+    const tp = new TypeParse(T.Object({ value3: T.Boolean() }));
+    expect(tp.parse(obj)).to.be.deep.equal({ value3: true });
+  });
+  describe("Nested object", () => {
+    it("(string)", () => {
+      const tp = new TypeParse(
+        T.Object({
+          nested: T.Object({
+            value1: T.String(),
+          }),
+        })
+      );
+      expect(tp.parse(obj)).to.be.deep.equal({ nested: { value1: "123" } });
+    });
+    it("(number)", () => {
+      const tp = new TypeParse(
+        T.Object({
+          nested: T.Object({
+            value2: T.Number(),
+          }),
+        })
+      );
+      expect(tp.parse(obj)).to.be.deep.equal({ nested: { value2: 123 } });
+    });
+    it("(boolean)", () => {
+      const tp = new TypeParse(
+        T.Object({
+          nested: T.Object({
+            value3: T.Boolean(),
+          }),
+        })
+      );
+      expect(tp.parse(obj)).to.be.deep.equal({ nested: { value3: true } });
+    });
+  });
+});
+
+describe("Multiple testing", () => {
+  tests.forEach((test, index) => {
+    it(`Test #${index + 1}: ${test.name}`, () => {
+      expect(test.parser.parse(test.input)).to.be.deep.equal(test.expected);
     });
   });
 });
