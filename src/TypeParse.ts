@@ -16,7 +16,7 @@ import {
   TParseArray,
   TParseOptions,
 } from "./Types";
-import { get, isNaN } from "lodash";
+import { get } from "./Utils";
 
 export class TypeParse<T extends TParseOptions = TParseOptions> {
   private config: T;
@@ -27,24 +27,12 @@ export class TypeParse<T extends TParseOptions = TParseOptions> {
 
   public parse(input: unknown, optionalOption?: TParseOptions): Static<T> {
     const option = optionalOption ?? this.config;
-
-    if (option.as === "object") {
-      return this.parseObject(input, option);
-    }
-
-    if (option.as === "array") {
-      return this.parseArray(input, option);
-    }
-
+    if (option.as === "object") return this.parseObject(input, option);
+    if (option.as === "array") return this.parseArray(input, option);
     if (option.from) input = get(input, option.from);
-
-    if (option.as === "string") {
-      return this.parseString(input, option);
-    } else if (option.as === "number") {
-      return this.parseNumber(input, option);
-    } else {
-      return this.parseBoolean(input, option);
-    }
+    if (option.as === "string") return this.parseString(input, option);
+    if (option.as === "number") return this.parseNumber(input, option);
+    return this.parseBoolean(input, option);
   }
 
   private parseString(
@@ -117,10 +105,15 @@ export class TypeParse<T extends TParseOptions = TParseOptions> {
 
     const results: Array<unknown> = [];
 
-    input.forEach((element) => {
-      const parsed = this.parse(element, option.type as TParseOptions);
-      if (parsed !== undefined) results.push(parsed);
-    });
+    try {
+      input.forEach((element) => {
+        const parsed = this.parse(element, option.type as TParseOptions);
+        if (parsed !== undefined) results.push(parsed);
+      });
+    } catch (error) {
+      if (option.isOptional) return undefined;
+      throw error;
+    }
 
     return results;
   }
@@ -135,9 +128,14 @@ export class TypeParse<T extends TParseOptions = TParseOptions> {
     }
     const result: { [key: string]: unknown } = {};
 
-    Object.entries(option.properties).forEach(([key, value]) => {
-      result[key] = this.parse(input, value);
-    });
+    try {
+      Object.entries(option.properties).forEach(([key, value]) => {
+        result[key] = this.parse(input, value);
+      });
+    } catch (error) {
+      if (option.isOptional) return undefined;
+      throw error;
+    }
 
     return result;
   }
@@ -159,7 +157,7 @@ export const Types = {
     }
   ): TParseRequired<TParseString> => {
     return {
-      $static: "string",
+      $static: undefined as never,
       as: "string",
       from,
       defaultValue: config?.defaultValue,
@@ -176,7 +174,7 @@ export const Types = {
     }
   ): TParseRequired<TParseNumber> => {
     return {
-      $static: 0,
+      $static: undefined as never,
       as: "number",
       from,
       defaultValue: config?.defaultValue,
@@ -194,7 +192,7 @@ export const Types = {
     }
   ): TParseRequired<TParseBoolean> => {
     return {
-      $static: true,
+      $static: undefined as never,
       as: "boolean",
       from,
       defaultValue: config?.defaultValue,
@@ -210,7 +208,7 @@ export const Types = {
     from?: string
   ): TParseRequired<TParseArray<T>> => {
     return {
-      $static: [],
+      $static: undefined as never,
       as: "array",
       from,
       type,
@@ -224,7 +222,7 @@ export const Types = {
     properties: T
   ): TParseRequired<TParseObject<T>> => {
     return {
-      $static: 0 as any,
+      $static: undefined as never,
       as: "object",
       properties,
       isOptional: false,

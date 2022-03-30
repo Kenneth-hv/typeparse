@@ -1,6 +1,6 @@
 # TypeParse
 
-Runtime object parsing and validation with static TypeScript typing.
+Runtime object transformation, parsing and validation with inferred static TypeScript typing.
 
 ## Install
 

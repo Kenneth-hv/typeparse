@@ -3,7 +3,6 @@
  *  Licensed under the MIT License. See LICENSE in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-
 import { TypeParse, Types as T } from "../src/TypeParse";
 import { expect } from "chai";
 import { describe } from "mocha";
@@ -205,6 +204,43 @@ describe("Array parsing", () => {
         v3: false,
       },
     ]);
+  });
+});
+
+describe("Optional types", () => {
+  it("(string)", () => {
+    const tp = new TypeParse(T.String("x").optional());
+    expect(tp.parse({})).to.be.equal(undefined);
+  });
+  it("(number)", () => {
+    const tp = new TypeParse(T.Number("x").optional());
+    expect(tp.parse({})).to.be.equal(undefined);
+  });
+  it("(boolean)", () => {
+    const tp = new TypeParse(T.Boolean("x").optional());
+    expect(tp.parse({})).to.be.equal(undefined);
+  });
+  it("(object)", () => {
+    const tp = new TypeParse(
+      T.Object({
+        obj: T.Object({
+          value: T.String("value"),
+        }).optional(),
+      })
+    );
+    const result = tp.parse({});
+    expect(result).to.be.deep.equal({ obj: undefined });
+  });
+  it("(object)", () => {
+    const tp = new TypeParse(
+      T.Object({
+        obj: T.Object({
+          value: T.String("value"),
+        }).optional(),
+      })
+    );
+    const result = tp.parse({});
+    expect(result).to.be.deep.equal({ obj: undefined });
   });
 });
 
