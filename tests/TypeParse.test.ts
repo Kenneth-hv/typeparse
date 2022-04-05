@@ -453,6 +453,54 @@ describe("Relative paths", () => {
   });
 });
 
+describe("Union", () => {
+  describe("(string, boolean, number)", () => {
+    const tp = new TypeParse(T.Union([T.Boolean(), T.Number(), T.String()]));
+    it("(boolean)", () => {
+      expect(tp.parse(true)).to.be.equal(true);
+      expect(tp.parse(false)).to.be.equal(false);
+    });
+    it("(number)", () => {
+      expect(tp.parse(123.45)).to.be.equal(123.45);
+      expect(tp.parse(-0.45)).to.be.equal(-0.45);
+      expect(tp.parse("123.45")).to.be.equal(123.45);
+      expect(tp.parse("-0.45")).to.be.equal(-0.45);
+    });
+    it("(string)", () => {
+      expect(tp.parse("Hello!")).to.be.equal("Hello!");
+    });
+    it("(invalid parse)", () => {
+      expect(() => tp.parse({})).to.throw(
+        "Cannot parse to match any type of union"
+      );
+    });
+  });
+  describe("(Object, arrays, primitives)", () => {
+    const tp = new TypeParse(
+      T.Union([
+        T.String(),
+        T.Object({ value: T.Number() }),
+        T.Array(T.Union([T.Number(), T.Boolean(), T.String()])),
+      ])
+    );
+    it("(string)", () => {
+      expect(tp.parse("Hello world!")).to.be.equal("Hello world!");
+    });
+    it("(object)", () => {
+      expect(tp.parse({ value: "123.45" })).to.be.deep.equal({ value: 123.45 });
+    });
+    it("(array)", () => {
+      expect(tp.parse([123, true, false, "hello", "-123"])).to.be.deep.equal([
+        123,
+        true,
+        false,
+        "hello",
+        -123,
+      ]);
+    });
+  });
+});
+
 describe("Any Type", () => {
   const obj = {
     a: {

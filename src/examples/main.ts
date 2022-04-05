@@ -1,11 +1,17 @@
-import { TypeParse, Types as B } from "../TypeParse";
+import { TypeParse, Types as T } from "../TypeParse";
 
 const tp = new TypeParse(
-  B.Object({
-    id: B.String("data.id").optional(),
-    name: B.String("user.public.name"),
-    phone: B.Number("user.public.phone"),
-    extra: B.Object({}),
+  T.Object({
+    id: T.String("data.id").optional(),
+    name: T.String("user.public.name"),
+    phone: T.Number("user.public.phone"),
+    extra: T.Object({}),
+    union: T.Union([
+      T.Object({
+        a: T.String(),
+      }),
+      T.Number(),
+    ]),
   })
 );
 
@@ -18,6 +24,9 @@ const result = tp.parse({
       name: "Kenneth",
       phone: "8182381283",
     },
+  },
+  union: {
+    a: "Hello!",
   },
 });
 
