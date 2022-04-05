@@ -3,7 +3,6 @@
  *  Licensed under the MIT License. See LICENSE in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-
 // ----------------------------------------------------------------------------
 //  Parse options
 // ----------------------------------------------------------------------------
@@ -49,8 +48,17 @@ export interface TParseBoolean extends TParseOption {
   defaultValue?: boolean;
 }
 
+export interface TParseAny extends TParseOption {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  $static: any;
+  from?: string;
+  as: "any";
+  defaultValue?: unknown;
+}
+
 export interface TParseObject<T extends TParseObjectProperties>
   extends TParseOption {
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   //@ts-ignore Temporary fix for: "'$static' is referenced directly or indirectly in its own type annotation."
   $static: SObject<T>;
   as: "object";
@@ -100,5 +108,6 @@ export type TParseOptions =
   | TParseString
   | TParseNumber
   | TParseBoolean
+  | TParseAny
   | TParseArray<TParseOption>
   | TParseObject<TParseObjectProperties>;
