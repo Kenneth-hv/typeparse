@@ -65,7 +65,7 @@ describe("Get method", () => {
       expect(get({ obj: { a: 1 } }, "obj.[0]")).to.be.equal(undefined);
       expect(get({ obj: { a: 1 } }, "obj.[0]")).to.be.equal(undefined);
     });
-    it("Input not object", () => {
+    it("Empty input", () => {
       expect(get({ "": 123 }, "")).to.be.equal(123);
     });
   });

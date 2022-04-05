@@ -76,6 +76,12 @@ export interface TParseObjectProperties {
   [key: string]: TParseOptions;
 }
 
+export interface TParseUnion<T extends TParseOption[]> extends TParseOption {
+  $static: SUnion<T>;
+  as: "union";
+  types: T;
+}
+
 // ----------------------------------------------------------------------------
 //  Static types
 // ----------------------------------------------------------------------------
@@ -93,14 +99,16 @@ export type SObjectProperties<T extends TParseObjectProperties> = {
   [I in SObjectOptionalPropertyKeys<T>]?: Static<T[I]>;
 };
 
-// export type SArray<T extends TParseSchema> = Array<Static<T>>;
-
 export type SObject<T extends TParseObjectProperties> =
   SObjectProperties<T> extends infer I
     ? {
         [K in keyof I]: I[K];
       }
     : never;
+
+export type SUnion<T extends TParseOption[]> = {
+  [K in keyof T]: T[K] extends TParseOption ? Static<T[K]> : never;
+}[number];
 
 export type Static<T extends TParseOption> = T["$static"];
 
@@ -110,4 +118,5 @@ export type TParseOptions =
   | TParseBoolean
   | TParseAny
   | TParseArray<TParseOption>
-  | TParseObject<TParseObjectProperties>;
+  | TParseObject<TParseObjectProperties>
+  | TParseUnion<TParseOption[]>;

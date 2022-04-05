@@ -251,6 +251,44 @@ const tests: TestUnit[] = [
       phone: 345,
     },
   },
+  {
+    name: "Deep nested unions",
+    input: {
+      value1: "invalid",
+      value2: "-123",
+      value3: "1",
+      array: [
+        { value: true },
+        { value: false },
+        "Hello world!",
+        { value: "123" },
+      ],
+    },
+    parser: new TypeParse(
+      T.Object({
+        id: T.Union([
+          T.Number("value1"),
+          T.Number("value2"),
+          T.String("value3"),
+        ]),
+        array: T.Array(
+          T.Union([
+            T.Object({ value: T.Union([T.Boolean(), T.Number()]) }),
+            T.String(),
+          ])
+        ),
+      })
+    ),
+    expected: {
+      id: -123,
+      array: [
+        { value: true },
+        { value: false },
+        "Hello world!",
+        { value: 123 },
+      ],
+    },
+  },
 ];
 
 export default tests;

@@ -16,6 +16,7 @@ import {
   TParseArray,
   TParseOptions,
   TParseAny,
+  TParseUnion,
 } from "./Types";
 import { get } from "./Utils";
 
@@ -31,21 +32,26 @@ export class TypeParse<T extends TParseOptions = TParseOptions> {
     config: TParseOptions,
     relativePath?: string
   ): Static<T> {
-    if (config.as === "object")
-      return this.parseObject(input, config, relativePath);
-    if (config.as === "array")
-      return this.parseArray(input, config, relativePath);
-    if (config.as === "string")
-      return this.parseString(input, config, relativePath);
-    if (config.as === "number")
-      return this.parseNumber(input, config, relativePath);
-    if (config.as === "boolean")
-      return this.parseBoolean(input, config, relativePath);
-    return this.parseAny(input, config, relativePath);
+    switch (config.as) {
+      case "object":
+        return this.parseObject(input, config, relativePath);
+      case "array":
+        return this.parseArray(input, config, relativePath);
+      case "string":
+        return this.parseString(input, config, relativePath);
+      case "number":
+        return this.parseNumber(input, config, relativePath);
+      case "boolean":
+        return this.parseBoolean(input, config, relativePath);
+      case "union":
+        return this.parseUnion(input, config, relativePath);
+      default:
+        return this.parseAny(input, config, relativePath);
+    }
   }
 
   public parse(input: unknown) {
-    return this._parse(input, this.config, "");
+    return this._parse(input, this.config);
   }
 
   private parseString(
@@ -146,17 +152,17 @@ export class TypeParse<T extends TParseOptions = TParseOptions> {
 
   private parseObject(
     input: unknown,
-    option: TParseObject<TParseObjectProperties>,
+    config: TParseObject<TParseObjectProperties>,
     relativePath?: string
   ): object | undefined {
     if (typeof input !== "object") {
-      if (option.isOptional) return undefined;
+      if (config.isOptional) return undefined;
       throw Error("Is not object");
     }
 
     const result: { [key: string]: unknown } = {};
     try {
-      Object.entries(option.properties).forEach(([key, value]) => {
+      Object.entries(config.properties).forEach(([key, value]) => {
         result[key] = this._parse(
           input,
           value,
@@ -164,10 +170,29 @@ export class TypeParse<T extends TParseOptions = TParseOptions> {
         );
       });
     } catch (error) {
-      if (option.isOptional) return undefined;
+      if (config.isOptional) return undefined;
       throw error;
     }
     return result;
+  }
+
+  private parseUnion(
+    input: unknown,
+    config: TParseUnion<TParseOption[]>,
+    relativePath?: string
+  ): unknown {
+    for (const value of config.types) {
+      try {
+        return this._parse(input, value as TParseOptions, relativePath);
+      } catch {
+        continue;
+      }
+    }
+    if (config.isOptional) {
+      return undefined;
+    } else {
+      throw new Error("Cannot parse to match any type of union");
+    }
   }
 }
 
@@ -189,12 +214,12 @@ export const Types = {
     return {
       $static: undefined as never,
       as: "string",
-      from,
       defaultValue: config?.defaultValue,
       isOptional: false,
       optional: function () {
         return optional(this);
       },
+      from,
     };
   },
   Number: (
@@ -206,12 +231,12 @@ export const Types = {
     return {
       $static: undefined as never,
       as: "number",
-      from,
       defaultValue: config?.defaultValue,
       isOptional: false,
       optional: function () {
         return optional(this);
       },
+      from,
     };
   },
   Boolean: (
@@ -224,13 +249,13 @@ export const Types = {
     return {
       $static: undefined as never,
       as: "boolean",
-      from,
       defaultValue: config?.defaultValue,
       strict: config?.strict !== undefined ? config.strict : true,
       isOptional: false,
       optional: function () {
         return optional(this);
       },
+      from,
     };
   },
   Any: (
@@ -242,12 +267,12 @@ export const Types = {
     return {
       $static: undefined as never,
       as: "any",
-      from,
       defaultValue: config?.defaultValue,
       isOptional: false,
       optional: function () {
         return optional(this);
       },
+      from,
     };
   },
   Array: <T extends TParseOption>(
@@ -257,12 +282,12 @@ export const Types = {
     return {
       $static: undefined as never,
       as: "array",
-      from,
-      type,
       isOptional: false,
       optional: function () {
         return optional(this);
       },
+      from,
+      type,
     };
   },
   Object: <T extends TParseObjectProperties>(
@@ -271,11 +296,24 @@ export const Types = {
     return {
       $static: undefined as never,
       as: "object",
-      properties,
       isOptional: false,
       optional: function () {
         return optional(this);
       },
+      properties,
+    };
+  },
+  Union: <T extends TParseOption[]>(
+    types: T
+  ): TParseRequired<TParseUnion<T>> => {
+    return {
+      $static: undefined as never,
+      as: "union",
+      isOptional: false,
+      optional: function () {
+        return optional(this);
+      },
+      types,
     };
   },
 };
