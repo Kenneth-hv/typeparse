@@ -15,6 +15,7 @@ import {
   TParseRequired,
   TParseArray,
   TParseOptions,
+  TParseAny,
 } from "./Types";
 import { get } from "./Utils";
 
@@ -38,7 +39,9 @@ export class TypeParse<T extends TParseOptions = TParseOptions> {
       return this.parseString(input, config, relativePath);
     if (config.as === "number")
       return this.parseNumber(input, config, relativePath);
-    return this.parseBoolean(input, config, relativePath);
+    if (config.as === "boolean")
+      return this.parseBoolean(input, config, relativePath);
+    return this.parseAny(input, config, relativePath);
   }
 
   public parse(input: unknown) {
@@ -109,6 +112,13 @@ export class TypeParse<T extends TParseOptions = TParseOptions> {
     } else {
       throw Error("Cannot parse boolean");
     }
+  }
+
+  private parseAny(input: unknown, config: TParseAny, relativePath?: string) {
+    if (typeof input !== "object") return input;
+    if (config.from) input = get(input, config.from);
+    else input = get(input, relativePath);
+    return input;
   }
 
   private parseArray(
@@ -217,6 +227,23 @@ export const Types = {
       from,
       defaultValue: config?.defaultValue,
       strict: config?.strict !== undefined ? config.strict : true,
+      isOptional: false,
+      optional: function () {
+        return optional(this);
+      },
+    };
+  },
+  Any: (
+    from?: string,
+    config?: {
+      defaultValue?: boolean;
+    }
+  ): TParseRequired<TParseAny> => {
+    return {
+      $static: undefined as never,
+      as: "any",
+      from,
+      defaultValue: config?.defaultValue,
       isOptional: false,
       optional: function () {
         return optional(this);

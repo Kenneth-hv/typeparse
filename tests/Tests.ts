@@ -225,6 +225,32 @@ const tests: TestUnit[] = [
       phone: 345,
     },
   },
+  {
+    name: "Type any",
+    input: {
+      id: "123456",
+      user: {
+        name: "JohnD",
+      },
+      contactInfo: {
+        phoneNumbers: ["123", "345", "567"],
+      },
+    },
+    parser: new TypeParse(
+      T.Object({
+        id: T.Number(),
+        user: T.Any(),
+        phone: T.Number("contactInfo.phoneNumbers.[-2]"),
+      })
+    ),
+    expected: {
+      id: 123456,
+      user: {
+        name: "JohnD",
+      },
+      phone: 345,
+    },
+  },
 ];
 
 export default tests;
