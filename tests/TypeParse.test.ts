@@ -333,14 +333,17 @@ describe("Relative paths", () => {
     value1: 123,
     value2: "123",
     value3: true,
+    value4: [1, 2, 3],
     nested: {
       value1: 123,
       value2: "123",
       value3: true,
+      value4: [1, 2, 3],
       nested: {
         value1: 123,
         value2: "123",
         value3: true,
+        value4: [1, 2, 3],
       },
     },
   };
@@ -355,6 +358,10 @@ describe("Relative paths", () => {
   it("(boolean)", () => {
     const tp = new TypeParse(T.Object({ value3: T.Boolean() }));
     expect(tp.parse(obj)).to.be.deep.equal({ value3: true });
+  });
+  it("(array)", () => {
+    const tp = new TypeParse(T.Object({ value4: T.Array(T.String()) }));
+    expect(tp.parse(obj)).to.be.deep.equal({ value4: ["1", "2", "3"] });
   });
   describe("Nested object", () => {
     it("(string)", () => {
@@ -386,6 +393,18 @@ describe("Relative paths", () => {
         })
       );
       expect(tp.parse(obj)).to.be.deep.equal({ nested: { value3: true } });
+    });
+    it("(array)", () => {
+      const tp = new TypeParse(
+        T.Object({
+          nested: T.Object({
+            nested: T.Object({ value4: T.Array(T.String()) }),
+          }),
+        })
+      );
+      expect(tp.parse(obj)).to.be.deep.equal({
+        nested: { nested: { value4: ["1", "2", "3"] } },
+      });
     });
   });
   describe("Double nested object", () => {
@@ -430,6 +449,49 @@ describe("Relative paths", () => {
       expect(tp.parse(obj)).to.be.deep.equal({
         nested: { nested: { value3: true } },
       });
+    });
+  });
+});
+
+describe("Any Type", () => {
+  const obj = {
+    a: {
+      array: [1, 2, "3", false],
+    },
+    b: 1,
+    c: "asd",
+    d: true,
+  };
+  it("(primitive)", () => {
+    const tp = new TypeParse(T.Any());
+    expect(tp.parse(obj.b)).to.be.equal(1);
+    expect(tp.parse(obj.c)).to.be.equal("asd");
+    expect(tp.parse(obj.d)).to.be.equal(true);
+  });
+  it("(object)", () => {
+    const tp = new TypeParse(
+      T.Object({
+        a: T.Any(),
+      })
+    );
+    expect(tp.parse(obj)).to.be.deep.equal({
+      a: {
+        array: [1, 2, "3", false],
+      },
+    });
+  });
+  it("(array)", () => {
+    const tp = new TypeParse(
+      T.Object({
+        a: T.Object({
+          array: T.Any(),
+        }),
+      })
+    );
+    expect(tp.parse(obj)).to.be.deep.equal({
+      a: {
+        array: [1, 2, "3", false],
+      },
     });
   });
 });
