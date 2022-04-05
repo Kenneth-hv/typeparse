@@ -51,7 +51,7 @@ export class TypeParse<T extends TParseOptions = TParseOptions> {
   }
 
   public parse(input: unknown) {
-    return this._parse(input, this.config, "");
+    return this._parse(input, this.config);
   }
 
   private parseString(
@@ -60,7 +60,7 @@ export class TypeParse<T extends TParseOptions = TParseOptions> {
     relativePath?: string
   ): string | undefined {
     if (config.from) input = get(input, config.from);
-    else if (relativePath) input = get(input, relativePath);
+    else input = get(input, relativePath);
     if (typeof input === "string") return input;
 
     if (typeof input === "number" || typeof input === "boolean")
@@ -81,7 +81,7 @@ export class TypeParse<T extends TParseOptions = TParseOptions> {
     relativePath?: string
   ): number | undefined {
     if (config.from) input = get(input, config.from);
-    else if (relativePath) input = get(input, relativePath);
+    else input = get(input, relativePath);
     if (typeof input === "number") return input;
 
     if (typeof input === "string") {
@@ -106,7 +106,7 @@ export class TypeParse<T extends TParseOptions = TParseOptions> {
     relativePath?: string
   ): boolean | undefined {
     if (config.from) input = get(input, config.from);
-    else if (relativePath) input = get(input, relativePath);
+    else input = get(input, relativePath);
     if (typeof input === "boolean") return input;
 
     if (!config.strict && typeof input !== "undefined") return !!input;
@@ -123,7 +123,7 @@ export class TypeParse<T extends TParseOptions = TParseOptions> {
   private parseAny(input: unknown, config: TParseAny, relativePath?: string) {
     if (typeof input !== "object") return input;
     if (config.from) input = get(input, config.from);
-    else if (relativePath) input = get(input, relativePath);
+    else input = get(input, relativePath);
     return input;
   }
 
@@ -133,7 +133,7 @@ export class TypeParse<T extends TParseOptions = TParseOptions> {
     relativePath?: string
   ): Array<unknown> | undefined {
     if (config.from) input = get(input, config.from);
-    else if (relativePath) input = get(input, relativePath);
+    else input = get(input, relativePath);
 
     if (!Array.isArray(input)) {
       if (config.isOptional) return undefined;
