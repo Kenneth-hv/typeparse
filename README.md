@@ -38,11 +38,11 @@ const input = JSON.parse(
 // Parsing configuration
 const tp = new TypeParse(
   T.Object({
-    id: T.Number("id"),
-    name: T.String("userInfo.name"),
-    phoneNumber: T.String("userInfo.phone"),
-    address: T.String("userInfo.address", { defaultValue: "no-address" }),
-    email: T.String("userInfo.email").optional(),
+    id: T.Number(),
+    name: T.String({ path: "userInfo.name" }),
+    phoneNumber: T.String({ path: "userInfo.phone" }),
+    address: T.String({ path: "userInfo.address", defaultValue: "no-address" }),
+    email: T.String({ path: "userInfo.email" }).optional(),
   })
 );
 

@@ -56,6 +56,17 @@ export interface TParseAny extends TParseOption {
   defaultValue?: unknown;
 }
 
+export type TParseCustomFunction<T = unknown> = (input: unknown) => T;
+
+export interface TParseCustom<ParseFunction extends TParseCustomFunction>
+  extends TParseOption {
+  $static: ParseFunction extends TParseCustomFunction<infer T> ? T : never;
+  from?: string;
+  as: "custom";
+  isOptional: boolean;
+  parseFunction: ParseFunction;
+}
+
 export interface TParseObject<T extends TParseObjectProperties>
   extends TParseOption {
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -117,6 +128,18 @@ export type TParseOptions =
   | TParseNumber
   | TParseBoolean
   | TParseAny
+  | TParseCustom<TParseCustomFunction>
   | TParseArray<TParseOption>
   | TParseObject<TParseObjectProperties>
   | TParseUnion<TParseOption[]>;
+
+export interface SafeParseResult<T extends TParseOptions> {
+  success: boolean;
+  data?: Static<T>;
+  error?: string;
+}
+
+export type ParseResult<
+  T extends TParseOptions,
+  B extends boolean
+> = B extends false ? Static<T> : SafeParseResult<T>;
