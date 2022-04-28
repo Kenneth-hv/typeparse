@@ -3,6 +3,7 @@
  *  Licensed under the MIT License. See LICENSE in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
+import { TypeParseError } from "./Error";
 import {
   Static,
   TParseNumber,
@@ -17,6 +18,9 @@ import {
   TParseOptions,
   TParseAny,
   TParseUnion,
+  ParseResult,
+  TParseCustom,
+  TParseCustomFunction,
 } from "./Types";
 import { get } from "./Utils";
 
@@ -25,6 +29,31 @@ export class TypeParse<T extends TParseOptions = TParseOptions> {
 
   public constructor(parseConfig: T) {
     this.config = parseConfig;
+  }
+
+  public parse<B extends boolean = false>(
+    input: unknown,
+    config?: {
+      safeParse?: B;
+    }
+  ): ParseResult<T, B> {
+    try {
+      const parsed = this._parse(input, this.config);
+      if (config?.safeParse)
+        return {
+          success: true,
+          data: parsed,
+        };
+      return parsed;
+    } catch (error) {
+      if (config?.safeParse) {
+        return {
+          success: false,
+          error: error.toString(),
+        };
+      }
+      throw error;
+    }
   }
 
   private _parse(
@@ -45,13 +74,11 @@ export class TypeParse<T extends TParseOptions = TParseOptions> {
         return this.parseBoolean(input, config, relativePath);
       case "union":
         return this.parseUnion(input, config, relativePath);
+      case "custom":
+        return this.parseCustom(input, config, relativePath);
       default:
         return this.parseAny(input, config, relativePath);
     }
-  }
-
-  public parse(input: unknown) {
-    return this._parse(input, this.config);
   }
 
   private parseString(
@@ -61,6 +88,7 @@ export class TypeParse<T extends TParseOptions = TParseOptions> {
   ): string | undefined {
     if (config.from) input = get(input, config.from);
     else input = get(input, relativePath);
+
     if (typeof input === "string") return input;
 
     if (typeof input === "number" || typeof input === "boolean")
@@ -71,7 +99,11 @@ export class TypeParse<T extends TParseOptions = TParseOptions> {
     } else if (config.isOptional) {
       return undefined;
     } else {
-      throw Error("Cannot parse string");
+      throw new TypeParseError({
+        expectedType: "string",
+        typeFound: input,
+        key: config.from ?? relativePath,
+      });
     }
   }
 
@@ -96,7 +128,11 @@ export class TypeParse<T extends TParseOptions = TParseOptions> {
     } else if (config.isOptional) {
       return undefined;
     } else {
-      throw Error("Cannot parse number");
+      throw new TypeParseError({
+        expectedType: "number",
+        typeFound: input,
+        key: config.from ?? relativePath,
+      });
     }
   }
 
@@ -116,7 +152,11 @@ export class TypeParse<T extends TParseOptions = TParseOptions> {
     } else if (config.isOptional) {
       return undefined;
     } else {
-      throw Error("Cannot parse boolean");
+      throw new TypeParseError({
+        expectedType: "boolean",
+        typeFound: input,
+        key: config.from ?? relativePath,
+      });
     }
   }
 
@@ -124,7 +164,28 @@ export class TypeParse<T extends TParseOptions = TParseOptions> {
     if (typeof input !== "object") return input;
     if (config.from) input = get(input, config.from);
     else input = get(input, relativePath);
-    return input;
+    return input ?? config.defaultValue ?? input;
+  }
+
+  private parseCustom(
+    input: unknown,
+    config: TParseCustom<TParseCustomFunction<unknown>>,
+    relativePath?: string
+  ): unknown | undefined {
+    if (config.from) input = get(input, config.from);
+    else input = get(input, relativePath);
+    try {
+      return config.parseFunction(input);
+    } catch (error) {
+      if (config.isOptional) {
+        return undefined;
+      } else {
+        throw new TypeParseError({
+          expectedType: "unknown",
+          customError: error,
+        });
+      }
+    }
   }
 
   private parseArray(
@@ -137,7 +198,11 @@ export class TypeParse<T extends TParseOptions = TParseOptions> {
 
     if (!Array.isArray(input)) {
       if (config.isOptional) return undefined;
-      throw Error("Is not array");
+      throw new TypeParseError({
+        expectedType: "array",
+        typeFound: input,
+        key: config.from ?? relativePath,
+      });
     }
 
     const results: Array<unknown> = [];
@@ -155,9 +220,15 @@ export class TypeParse<T extends TParseOptions = TParseOptions> {
     config: TParseObject<TParseObjectProperties>,
     relativePath?: string
   ): object | undefined {
+    if (config.from) relativePath = config.from;
+
     if (typeof input !== "object") {
       if (config.isOptional) return undefined;
-      throw Error("Is not object");
+      throw new TypeParseError({
+        expectedType: "object",
+        typeFound: input,
+        key: relativePath,
+      });
     }
 
     const result: { [key: string]: unknown } = {};
@@ -205,12 +276,10 @@ const optional = <T extends TParseOption>(option: T): TParseOptional<T> => {
 };
 
 export const Types = {
-  String: (
-    from?: string,
-    config?: {
-      defaultValue?: string;
-    }
-  ): TParseRequired<TParseString> => {
+  String: (config?: {
+    defaultValue?: string;
+    path?: string;
+  }): TParseRequired<TParseString> => {
     return {
       $static: undefined as never,
       as: "string",
@@ -219,15 +288,13 @@ export const Types = {
       optional: function () {
         return optional(this);
       },
-      from,
+      from: config?.path,
     };
   },
-  Number: (
-    from?: string,
-    config?: {
-      defaultValue?: number;
-    }
-  ): TParseRequired<TParseNumber> => {
+  Number: (config?: {
+    defaultValue?: number;
+    path?: string;
+  }): TParseRequired<TParseNumber> => {
     return {
       $static: undefined as never,
       as: "number",
@@ -236,16 +303,14 @@ export const Types = {
       optional: function () {
         return optional(this);
       },
-      from,
+      from: config?.path,
     };
   },
-  Boolean: (
-    from?: string,
-    config?: {
-      defaultValue?: boolean;
-      strict?: boolean;
-    }
-  ): TParseRequired<TParseBoolean> => {
+  Boolean: (config?: {
+    defaultValue?: boolean;
+    path?: string;
+    strict?: boolean;
+  }): TParseRequired<TParseBoolean> => {
     return {
       $static: undefined as never,
       as: "boolean",
@@ -255,29 +320,23 @@ export const Types = {
       optional: function () {
         return optional(this);
       },
-      from,
+      from: config?.path,
     };
   },
-  Any: (
-    from?: string,
-    config?: {
-      defaultValue?: boolean;
-    }
-  ): TParseRequired<TParseAny> => {
+  Any: (config?: { defaultValue?: unknown; path?: string }): TParseAny => {
     return {
       $static: undefined as never,
       as: "any",
-      defaultValue: config?.defaultValue,
       isOptional: false,
-      optional: function () {
-        return optional(this);
-      },
-      from,
+      from: config?.path,
+      defaultValue: config?.defaultValue,
     };
   },
   Array: <T extends TParseOption>(
     type: T,
-    from?: string
+    config?: {
+      path?: string;
+    }
   ): TParseRequired<TParseArray<T>> => {
     return {
       $static: undefined as never,
@@ -286,12 +345,15 @@ export const Types = {
       optional: function () {
         return optional(this);
       },
-      from,
+      from: config?.path,
       type,
     };
   },
   Object: <T extends TParseObjectProperties>(
-    properties: T
+    properties: T,
+    config?: {
+      path?: string;
+    }
   ): TParseRequired<TParseObject<T>> => {
     return {
       $static: undefined as never,
@@ -301,6 +363,7 @@ export const Types = {
         return optional(this);
       },
       properties,
+      from: config?.path,
     };
   },
   Union: <T extends TParseOption[]>(
@@ -314,6 +377,24 @@ export const Types = {
         return optional(this);
       },
       types,
+    };
+  },
+  Custom: <Func extends TParseCustomFunction>(
+    func: Func,
+    config?: {
+      defaultValue?: boolean;
+      path?: string;
+    }
+  ): TParseRequired<TParseCustom<Func>> => {
+    return {
+      $static: undefined as never,
+      as: "custom",
+      isOptional: false,
+      optional: function () {
+        return optional(this);
+      },
+      parseFunction: func,
+      from: config?.path,
     };
   },
 };
