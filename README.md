@@ -106,11 +106,11 @@ const input = {
 
 const tp = new TypeParse(
   T.Object({
-    name: T.String("user.name"),
-    lastName: T.String("user.lastName"),
+    name: T.String({ path: "user.name" }),
+    lastName: T.String({ path: "user.lastName" }),
     contactInfo: T.Object({
-      email: T.String("email"),
-      phone: T.String("phoneNumbers.[0]"),
+      email: T.String({ path: "email" }),
+      phone: T.String({ path: "phoneNumbers.[0]" }),
     }),
   })
 );
